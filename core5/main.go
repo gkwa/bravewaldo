@@ -13,37 +13,52 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
-	"mvdan.cc/xurls/v2"
 )
 
 type URLWrapperTransformer struct {
-	urlRegex *regexp.Regexp
+	LinkPattern *regexp.Regexp
+}
+
+func (t *URLWrapperTransformer) WrapURLs(node *ast.Text, source []byte) {
+	parent := node.Parent()
+	tSegment := node.Segment
+	match := t.LinkPattern.FindIndex(tSegment.Value(source))
+	if match == nil {
+		return
+	}
+
+	lSegment := text.NewSegment(tSegment.Start+match[0], tSegment.Start+match[1])
+
+	if lSegment.Start != tSegment.Start {
+		bText := ast.NewTextSegment(tSegment.WithStop(lSegment.Start))
+		parent.InsertBefore(parent, node, bText)
+	}
+
+	wrappedURL := fmt.Sprintf("|%s|", lSegment.Value(source))
+	wrappedNode := ast.NewString([]byte(wrappedURL))
+	parent.InsertBefore(parent, node, wrappedNode)
+
+	node.Segment = tSegment.WithStart(lSegment.Stop)
+
+	if node.Segment.Len() > 0 {
+		t.WrapURLs(node, source)
+	}
 }
 
 func (t *URLWrapperTransformer) Transform(node *ast.Document, reader text.Reader, pc parser.Context) {
 	source := reader.Source()
 
-	if err := ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
-		if !entering || n.Kind() != ast.KindText {
+	err := ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
 			return ast.WalkContinue, nil
 		}
-
-		textNode := n.(*ast.Text)
-		segment := textNode.Segment
-		original := segment.Value(source)
-
-		wrapped := t.urlRegex.ReplaceAllFunc(original, func(m []byte) []byte {
-			return []byte(fmt.Sprintf("|%s|", m))
-		})
-
-		if !bytes.Equal(original, wrapped) {
-			newNode := ast.NewString(wrapped)
-			newNode.SetRaw(textNode.IsRaw())
-			n.Parent().ReplaceChild(n.Parent(), n, newNode)
+		if node.Kind() == ast.KindText {
+			textNode := node.(*ast.Text)
+			t.WrapURLs(textNode, source)
 		}
-
 		return ast.WalkContinue, nil
-	}); err != nil {
+	})
+	if err != nil {
 		log.Printf("Error walking AST: %v", err)
 	}
 }
@@ -58,17 +73,13 @@ func Main() {
 	}
 
 	transformer := &URLWrapperTransformer{
-		urlRegex: xurls.Strict(),
+		LinkPattern: regexp.MustCompile(`https?://\S+`),
 	}
+	prioritizedTransformer := util.Prioritized(transformer, 0)
 
-	renderer := markdown.NewRenderer(markdown.WithHeadingStyle(markdown.HeadingStyleATX))
 	md := goldmark.New(
-		goldmark.WithRenderer(renderer),
-		goldmark.WithParserOptions(
-			parser.WithASTTransformers(
-				util.Prioritized(transformer, 100),
-			),
-		),
+		goldmark.WithRenderer(markdown.NewRenderer()),
+		goldmark.WithParserOptions(parser.WithASTTransformers(prioritizedTransformer)),
 	)
 
 	var buf bytes.Buffer
