@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 
 	markdown "github.com/teekennedy/goldmark-markdown"
 	"github.com/yuin/goldmark"
+	"mvdan.cc/xurls/v2"
 )
 
 func wrapURLs(input []byte) []byte {
-	re := regexp.MustCompile(`https?://\S+`)
-	return re.ReplaceAllFunc(input, func(match []byte) []byte {
+	rxStrict := xurls.Strict()
+	return rxStrict.ReplaceAllFunc(input, func(match []byte) []byte {
 		return []byte(fmt.Sprintf("|%s|", match))
 	})
 }
