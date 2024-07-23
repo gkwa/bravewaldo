@@ -13,6 +13,8 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
+	github.com/teekennedy/goldmark-markdown v0.3.0
+	github.com/yuin/goldmark v1.5.4
 	go.uber.org/zap v1.27.0
 	sigs.k8s.io/controller-runtime v0.18.4
 )
