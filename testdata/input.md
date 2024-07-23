@@ -4,6 +4,7 @@ This is a test markdown file with some URLs:
 
 https://example.com
 
+[Google](https://google.com)
 
 - http://test.org
 - Just some text without a URL
