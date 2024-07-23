@@ -1,13 +1,17 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"regexp"
 
 	"github.com/go-logr/logr"
+	markdown "github.com/teekennedy/goldmark-markdown"
 	"github.com/yuin/goldmark"
+	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
 )
@@ -33,7 +37,13 @@ func Example(logger logr.Logger) {
 		return
 	}
 
-	md := goldmark.New()
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.GFM, extension.DefinitionList, meta.Meta),
+		goldmark.WithRenderer(markdown.NewRenderer()),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+	)
 	doc := md.Parser().Parse(text.NewReader(source))
 
 	var urls []string
@@ -44,7 +54,12 @@ func Example(logger logr.Logger) {
 
 		if autoLink, ok := n.(*ast.AutoLink); ok {
 			url := string(autoLink.URL(source))
-			urls = append(urls, url)
+			logger.V(1).Info("found")
+			wrappedUrl := fmt.Sprintf("|%s|", url)
+			urls = append(urls, wrappedUrl)
+			newText := ast.NewString([]byte(wrappedUrl))
+			autoLink.RemoveChildren(autoLink)
+			autoLink.AppendChild(autoLink, newText)
 		}
 
 		return ast.WalkContinue, nil
@@ -57,6 +72,17 @@ func Example(logger logr.Logger) {
 	logger.Info("Found URLs", "count", len(urls))
 	for i, url := range urls {
 		logger.Info(fmt.Sprintf("URL %d: %s", i+1, url))
+	}
+
+	var buf bytes.Buffer
+	if err := md.Renderer().Render(&buf, source, doc); err != nil {
+		logger.Error(err, "Error rendering markdown")
+		return
+	}
+
+	if err := os.WriteFile("testdata/output.md", buf.Bytes(), 0o644); err != nil {
+		logger.Error(err, "Error writing output file")
+		return
 	}
 
 	logger.V(1).Info("Debug: Exiting Example function")
