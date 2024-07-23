@@ -5,8 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var helloCmd = &cobra.Command{
-	Use:   "hello",
+var core1Cmd = &cobra.Command{
+	Use:   "core1",
 	Short: "A brief description of your command",
 	Long:  `A longer description that spans multiple lines and likely contains examples and usage of using your command.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -17,5 +17,5 @@ var helloCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(helloCmd)
+	rootCmd.AddCommand(core1Cmd)
 }

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 
 	markdown "github.com/teekennedy/goldmark-markdown"
 	"github.com/yuin/goldmark"
+	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 )
@@ -14,33 +16,25 @@ import (
 func Main() {
 	// Create goldmark converter with markdown renderer object
 	// Can pass functional Options as arguments. This example converts headings to ATX style.
-	renderer := markdown.NewRenderer(markdown.WithHeadingStyle(markdown.HeadingStyleATX))
+	renderer := markdown.NewRenderer()
 	md := goldmark.New(
 		goldmark.WithRenderer(renderer),
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(extension.GFM, meta.Meta),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
 	)
 
 	// "Convert" markdown to formatted markdown
-	source := `
-My Document Title
-=================
 
-## Section 1
+	// Read input from file
+	source, err := os.ReadFile("testdata/input.md")
+	if err != nil {
+		log.Fatalf("Error reading input file: %v", err)
+	}
 
-This is a paragraph.
-
-* List item 1
-* List item 2
-
-### Subsection
-
-More content here.
-`
 	buf := bytes.Buffer{}
-	err := md.Convert([]byte(source), &buf)
+	err = md.Convert(source, &buf)
 	if err != nil {
 		log.Fatal(err)
 	}
