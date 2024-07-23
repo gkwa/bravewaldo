@@ -8,7 +8,43 @@ import (
 
 	markdown "github.com/teekennedy/goldmark-markdown"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer"
+	"github.com/yuin/goldmark/util"
 )
+
+type URLWrapperRenderer struct {
+	markdown.Renderer
+}
+
+func NewURLWrapperRenderer() renderer.Renderer {
+	r := markdown.NewRenderer(markdown.WithHeadingStyle(markdown.HeadingStyleATX))
+	r.AddOptions(renderer.WithNodeRenderers(
+		util.Prioritized(URLWrapperNodeRenderer{}, 100),
+	))
+	return r
+}
+
+type URLWrapperNodeRenderer struct{}
+
+func (r URLWrapperNodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+	reg.Register(ast.KindAutoLink, r.renderAutoLink)
+}
+
+func (r URLWrapperNodeRenderer) renderAutoLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	if entering {
+		n := node.(*ast.AutoLink)
+		url := n.URL(source)
+		wrappedURL := fmt.Sprintf("|%s|", url)
+		_, err := w.WriteString(wrappedURL)
+		if err != nil {
+			return ast.WalkStop, err
+		}
+		return ast.WalkSkipChildren, nil
+	}
+	return ast.WalkContinue, nil
+}
 
 func Main() {
 	filename := "testdata/input.md"
@@ -18,15 +54,15 @@ func Main() {
 		log.Fatalf("Error reading file: %v", err)
 	}
 
-	// Create goldmark converter with markdown renderer object
-	// Can pass functional Options as arguments. This example converts headings to ATX style.
-	renderer := markdown.NewRenderer(markdown.WithHeadingStyle(markdown.HeadingStyleATX))
-	md := goldmark.New(goldmark.WithRenderer(renderer))
+	md := goldmark.New(
+		goldmark.WithRenderer(NewURLWrapperRenderer()),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+	)
 
-	// "Convert" markdown to formatted markdown
-	buf := bytes.Buffer{}
-	err = md.Convert(source, &buf)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := md.Convert(source, &buf); err != nil {
 		log.Fatalf("Error converting markdown: %v", err)
 	}
 
