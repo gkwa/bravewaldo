@@ -73,7 +73,6 @@ func Example(logger logr.Logger) {
 	}
 	logger.V(1).Info("Initial AST structure", "structure", initialAST)
 
-	var urls []string
 	err = ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
@@ -84,7 +83,6 @@ func Example(logger logr.Logger) {
 		if autoLink, ok := n.(*ast.AutoLink); ok {
 			url := autoLink.URL(source)
 			wrappedUrl := fmt.Sprintf("|%s|", url)
-			urls = append(urls, wrappedUrl)
 			logger.V(1).Info("Found AutoLink", "url", string(url), "wrapped", wrappedUrl)
 		}
 
@@ -101,11 +99,6 @@ func Example(logger logr.Logger) {
 		return
 	}
 	logger.V(1).Info("Final AST structure", "structure", finalAST)
-
-	logger.Info("Found URLs", "count", len(urls))
-	for i, url := range urls {
-		logger.Info(fmt.Sprintf("URL %d: %s", i+1, url))
-	}
 
 	var buf bytes.Buffer
 	logger.V(1).Info("Starting markdown rendering")
