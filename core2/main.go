@@ -28,7 +28,6 @@ func Main() {
 My Document Title
 =================
 
-
 ## Section 1
 
 This is a paragraph.
