@@ -49,7 +49,6 @@ func (r URLWrapperNodeRenderer) renderAutoLink(w util.BufWriter, source []byte, 
 
 func Example(logger logr.Logger) {
 	logger.V(1).Info("Debug: Entering Example function")
-	logger.Info("Processing markdown file")
 
 	source, err := os.ReadFile("testdata/input.md")
 	if err != nil {

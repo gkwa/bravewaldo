@@ -11,7 +11,6 @@ var core1Cmd = &cobra.Command{
 	Long:  `A longer description that spans multiple lines and likely contains examples and usage of using your command.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := LoggerFrom(cmd.Context())
-		logger.V(1).Info("Running hello command")
 		core.Example(logger)
 	},
 }
