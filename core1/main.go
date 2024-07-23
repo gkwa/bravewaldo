@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -14,38 +15,40 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/text"
-	"github.com/yuin/goldmark/util"
 )
 
-type URLWrapperRenderer struct{}
+type URLWrapperRenderer struct {
+	renderer.Renderer
+}
 
 func NewURLWrapperRenderer() renderer.Renderer {
-	r := renderer.NewRenderer()
-	r.AddOptions(renderer.WithNodeRenderers(
-		util.Prioritized(URLWrapperNodeRenderer{}, 100),
-	))
-	return r
+	return &URLWrapperRenderer{
+		Renderer: renderer.NewRenderer(),
+	}
 }
 
-type URLWrapperNodeRenderer struct{}
-
-func (r URLWrapperNodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
-	reg.Register(ast.KindAutoLink, r.renderAutoLink)
-}
-
-func (r URLWrapperNodeRenderer) renderAutoLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
-	if entering {
-		n := node.(*ast.AutoLink)
-		url := n.URL(source)
-		wrappedURL := fmt.Sprintf("|%s|", url)
-		_, err := w.WriteString(wrappedURL)
+func (r *URLWrapperRenderer) Render(w io.Writer, source []byte, n ast.Node) error {
+	return ast.Walk(n, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering {
+			if autoLink, ok := n.(*ast.AutoLink); ok {
+				url := autoLink.URL(source)
+				wrappedURL := fmt.Sprintf("|%s|", url)
+				_, err := w.Write([]byte(wrappedURL))
+				if err != nil {
+					return ast.WalkStop, err
+				}
+				return ast.WalkSkipChildren, nil
+			}
+		}
+		err := r.Renderer.Render(w, source, n)
 		if err != nil {
 			return ast.WalkStop, err
 		}
-		return ast.WalkSkipChildren, nil
-	}
-	return ast.WalkContinue, nil
+		return ast.WalkContinue, nil
+	})
 }
+
+func (r *URLWrapperRenderer) AddOptions(...renderer.Option) {}
 
 func Example(logger logr.Logger) {
 	logger.V(1).Info("Debug: Entering Example function")
