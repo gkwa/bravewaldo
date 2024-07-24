@@ -17,29 +17,34 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-type URLWrapperRenderer struct{}
-
-func NewURLWrapperRenderer() renderer.Renderer {
+func NewURLWrapperRenderer(logger logr.Logger) renderer.Renderer {
+	logger.V(1).Info("Creating new URLWrapperRenderer")
 	r := renderer.NewRenderer()
 	r.AddOptions(renderer.WithNodeRenderers(
-		util.Prioritized(URLWrapperNodeRenderer{}, 100),
+		util.Prioritized(URLWrapperNodeRenderer{logger: logger}, 100),
 	))
 	return r
 }
 
-type URLWrapperNodeRenderer struct{}
+type URLWrapperNodeRenderer struct {
+	logger logr.Logger
+}
 
 func (r URLWrapperNodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+	r.logger.V(1).Info("Registering renderAutoLink function")
 	reg.Register(ast.KindAutoLink, r.renderAutoLink)
 }
 
 func (r URLWrapperNodeRenderer) renderAutoLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	r.logger.V(1).Info("Entering renderAutoLink")
 	if entering {
 		n := node.(*ast.AutoLink)
 		url := n.URL(source)
 		wrappedURL := fmt.Sprintf("|%s|", url)
+		r.logger.V(1).Info("Wrapping URL", "original", string(url), "wrapped", wrappedURL)
 		_, err := w.WriteString(wrappedURL)
 		if err != nil {
+			r.logger.Error(err, "Failed to write wrapped URL")
 			return ast.WalkStop, err
 		}
 		return ast.WalkSkipChildren, nil
@@ -56,8 +61,9 @@ func Example(logger logr.Logger) {
 		return
 	}
 
+	logger.V(1).Info("Creating new Goldmark instance")
 	md := goldmark.New(
-		goldmark.WithRenderer(NewURLWrapperRenderer()),
+		goldmark.WithRenderer(NewURLWrapperRenderer(logger)),
 		goldmark.WithExtensions(extension.GFM, extension.DefinitionList, meta.Meta),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
