@@ -129,7 +129,7 @@ https://example.com is a great site and so is https://goOgle.com
 			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
-			name: "Markdown links with titles should not be replaced",
+			name: "Markdown links with double-quoted titles should not be replaced",
 			inputText: `
 Check out [Google](https://google.com "Search Engine")
 And [Example](https://example.com "Sample Site")
@@ -137,6 +137,18 @@ And [Example](https://example.com "Sample Site")
 			expectedOutput: `
 Check out [Google](https://google.com "Search Engine")
 And [Example](https://example.com "Sample Site")
+`,
+			options: ProcessOptions{IncludeTitle: false},
+		},
+		{
+			name: "Markdown links with single-quoted titles should not be replaced",
+			inputText: `
+Check out [Google](https://google.com 'Search Engine')
+And [Example](https://example.com 'Sample Site')
+`,
+			expectedOutput: `
+Check out [Google](https://google.com 'Search Engine')
+And [Example](https://example.com 'Sample Site')
 `,
 			options: ProcessOptions{IncludeTitle: false},
 		},
@@ -144,11 +156,11 @@ And [Example](https://example.com "Sample Site")
 			name: "Markdown links with titles and spaces should not be replaced",
 			inputText: `
 Visit [ Google ]( https://google.com  "Best Search Engine" )
-Also [ Example ]( https://example.com  "Great Example Site" )
+Also [ Example ]( https://example.com  'Great Example Site' )
 `,
 			expectedOutput: `
 Visit [ Google ]( https://google.com  "Best Search Engine" )
-Also [ Example ]( https://example.com  "Great Example Site" )
+Also [ Example ]( https://example.com  'Great Example Site' )
 `,
 			options: ProcessOptions{IncludeTitle: false},
 		},
@@ -156,11 +168,11 @@ Also [ Example ]( https://example.com  "Great Example Site" )
 			name: "Mix of Markdown links with titles and plain URLs",
 			inputText: `
 [Google](https://google.com "Search") and https://example.com are great sites
-Also check [Example](https://example.com "Sample") and http://test.org
+Also check [Example](https://example.com 'Sample') and http://test.org
 `,
 			expectedOutput: `
 [Google](https://google.com "Search") and [sample website](https://example.com) are great sites
-Also check [Example](https://example.com "Sample") and [testing site](http://test.org)
+Also check [Example](https://example.com 'Sample') and [testing site](http://test.org)
 `,
 			options: ProcessOptions{IncludeTitle: false},
 		},
@@ -178,9 +190,11 @@ Check out [search engine](https://google.com) and [sample website](https://examp
 			name: "Existing links with IncludeTitle true",
 			inputText: `
 [Google](https://google.com) and [Example](https://example.com "Sample")
+Also [Test](https://test.org 'Testing')
 `,
 			expectedOutput: `
 [Google](https://google.com) and [Example](https://example.com "Sample")
+Also [Test](https://test.org 'Testing')
 `,
 			options: ProcessOptions{IncludeTitle: true},
 		},
@@ -204,11 +218,13 @@ Check out [search engine](https://google.com) and [sample website](https://examp
 func TestProcessMarkdownWithTitles(t *testing.T) {
 	input := `
 Check out [Google](https://google.com "Search Engine")
-And https://example.com
+And [Example](https://example.com 'Sample Site')
+Also https://example.com
 `
 	expected := `
 Check out [Google](https://google.com "Search Engine")
-And [sample website](https://example.com)
+And [Example](https://example.com 'Sample Site')
+Also [sample website](https://example.com)
 `
 
 	var output bytes.Buffer

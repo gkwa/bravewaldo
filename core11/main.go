@@ -59,15 +59,19 @@ func ProcessMarkdown(input io.Reader, output io.Writer, urlMap map[string]string
 }
 
 func parseMarkdownLink(text string) MarkdownLink {
-	re := regexp.MustCompile(`^\[([^\]]+)\]\s*\(([^)\s]+)(?:\s+"([^"]+)")?\)$`)
+	re := regexp.MustCompile(`^\[([^\]]+)\]\s*\(([^)\s]+)(?:\s+(?:"([^"]+)"|'([^']+)')?)?\)$`)
 	matches := re.FindStringSubmatch(text)
 	if len(matches) >= 3 {
 		link := MarkdownLink{
 			Name: matches[1],
 			URL:  matches[2],
 		}
-		if len(matches) == 4 {
-			link.Title = matches[3]
+		if len(matches) >= 4 {
+			if matches[3] != "" {
+				link.Title = matches[3] // Double-quoted title
+			} else if matches[4] != "" {
+				link.Title = matches[4] // Single-quoted title
+			}
 		}
 		return link
 	}
@@ -88,16 +92,19 @@ func Main() error {
 		"http://test.org":              "testing site",
 		"https://github.com/user/repo": "code repository",
 	}
+
 	inputFile, err := os.Open("testdata/input.md")
 	if err != nil {
 		return fmt.Errorf("failed to open input file: %v", err)
 	}
 	defer inputFile.Close()
+
 	outputFile, err := os.Create("testdata/output.md")
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %v", err)
 	}
 	defer outputFile.Close()
+
 	options := ProcessOptions{IncludeTitle: false}
 	return ProcessMarkdown(inputFile, outputFile, urlMap, options)
 }
