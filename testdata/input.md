@@ -2,7 +2,7 @@
 
 This is a test markdown file with some URLs:
 
-https://example.com
+[[this and that]] https://example.com
 
 [Google](https://google.com)
 
