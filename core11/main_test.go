@@ -129,38 +129,38 @@ https://example.com is a great site and so is https://goOgle.com
 			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
-			name: "Markdown links with double-quoted titles should not be replaced",
+			name: "Markdown links with double-quoted titles should be preserved without titles when IncludeTitle is false",
 			inputText: `
 Check out [Google](https://google.com "Search Engine")
 And [Example](https://example.com "Sample Site")
 `,
 			expectedOutput: `
-Check out [Google](https://google.com "Search Engine")
-And [Example](https://example.com "Sample Site")
+Check out [Google](https://google.com)
+And [Example](https://example.com)
 `,
 			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
-			name: "Markdown links with single-quoted titles should not be replaced",
+			name: "Markdown links with single-quoted titles should be preserved without titles when IncludeTitle is false",
 			inputText: `
 Check out [Google](https://google.com 'Search Engine')
 And [Example](https://example.com 'Sample Site')
 `,
 			expectedOutput: `
-Check out [Google](https://google.com 'Search Engine')
-And [Example](https://example.com 'Sample Site')
+Check out [Google](https://google.com)
+And [Example](https://example.com)
 `,
 			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
-			name: "Markdown links with titles and spaces should not be replaced",
+			name: "Markdown links with titles and spaces should be preserved without titles when IncludeTitle is false",
 			inputText: `
 Visit [ Google ]( https://google.com  "Best Search Engine" )
 Also [ Example ]( https://example.com  'Great Example Site' )
 `,
 			expectedOutput: `
-Visit [ Google ]( https://google.com  "Best Search Engine" )
-Also [ Example ]( https://example.com  'Great Example Site' )
+Visit [Google](https://google.com)
+Also [Example](https://example.com)
 `,
 			options: ProcessOptions{IncludeTitle: false},
 		},
@@ -171,8 +171,8 @@ Also [ Example ]( https://example.com  'Great Example Site' )
 Also check [Example](https://example.com 'Sample') and http://test.org
 `,
 			expectedOutput: `
-[Google](https://google.com "Search") and [sample website](https://example.com) are great sites
-Also check [Example](https://example.com 'Sample') and [testing site](http://test.org)
+[Google](https://google.com) and [sample website](https://example.com) are great sites
+Also check [Example](https://example.com) and [testing site](http://test.org)
 `,
 			options: ProcessOptions{IncludeTitle: false},
 		},
@@ -194,7 +194,7 @@ Also [Test](https://test.org 'Testing')
 `,
 			expectedOutput: `
 [Google](https://google.com) and [Example](https://example.com "Sample")
-Also [Test](https://test.org 'Testing')
+Also [Test](https://test.org "Testing")
 `,
 			options: ProcessOptions{IncludeTitle: true},
 		},
@@ -223,12 +223,35 @@ Also https://example.com
 `
 	expected := `
 Check out [Google](https://google.com "Search Engine")
-And [Example](https://example.com 'Sample Site')
+And [Example](https://example.com "Sample Site")
 Also [sample website](https://example.com)
 `
 
 	var output bytes.Buffer
 	options := ProcessOptions{IncludeTitle: true}
+	err := ProcessMarkdown(strings.NewReader(input), &output, urlMap, options)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if diff := cmp.Diff(expected, output.String()); diff != "" {
+		t.Errorf("output mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestProcessMarkdownWithoutTitles(t *testing.T) {
+	input := `
+Check out [Google](https://google.com "Search Engine")
+And [Example](https://example.com 'Sample Site')
+Also https://example.com
+`
+	expected := `
+Check out [Google](https://google.com)
+And [Example](https://example.com)
+Also [sample website](https://example.com)
+`
+
+	var output bytes.Buffer
+	options := ProcessOptions{IncludeTitle: false}
 	err := ProcessMarkdown(strings.NewReader(input), &output, urlMap, options)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

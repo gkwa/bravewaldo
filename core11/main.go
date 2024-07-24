@@ -63,8 +63,8 @@ func parseMarkdownLink(text string) MarkdownLink {
 	matches := re.FindStringSubmatch(text)
 	if len(matches) >= 3 {
 		link := MarkdownLink{
-			Name: matches[1],
-			URL:  matches[2],
+			Name: strings.TrimSpace(matches[1]),
+			URL:  strings.TrimSpace(matches[2]),
 		}
 		if len(matches) >= 4 {
 			if matches[3] != "" {
@@ -80,10 +80,10 @@ func parseMarkdownLink(text string) MarkdownLink {
 
 func formatMarkdownLink(link MarkdownLink, includeTitle bool) string {
 	if includeTitle && link.Title != "" {
-		if strings.Contains(link.Title, "'") {
-			return fmt.Sprintf("[%s](%s \"%s\")", link.Name, link.URL, link.Title)
+		if strings.Contains(link.Title, `"`) {
+			return fmt.Sprintf("[%s](%s '%s')", link.Name, link.URL, link.Title)
 		}
-		return fmt.Sprintf("[%s](%s '%s')", link.Name, link.URL, link.Title)
+		return fmt.Sprintf("[%s](%s \"%s\")", link.Name, link.URL, link.Title)
 	}
 	return fmt.Sprintf("[%s](%s)", link.Name, link.URL)
 }
