@@ -94,3 +94,12 @@ help:
 .PHONY: clean # clean bin
 clean:
 	$(RM) -r $(BIN) .timestamps
+
+
+.PHONY: test # run all tests
+test:
+	go test -count=1 ./core11
+
+.PHONY: test-skip-flaky # run tests skipping flaky ones
+test-skip-flaky:
+	go test -count=1 -tags=skip_flaky ./core11
