@@ -1,6 +1,6 @@
 # bravewaldo
 
-Purpose: Bravewaldo is a fun and quirky command-line tool for processing and transforming Markdown files. It's like having a little digital helper that can spruce up your Markdown content with a few simple commands. Whether you want to wrap URLs, rewrite links, or do some other Markdown magic, Bravewaldo has got your back!
+Purpose: learn how to use goldmark to process markdown.
 
 ## Example Usage
 
