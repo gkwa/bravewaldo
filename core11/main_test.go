@@ -115,10 +115,10 @@ See [sample website3](https://example.com#section1) for more info
 		{
 			name: "URLs at the beginning and end of the line should be replaced",
 			inputText: `
-https://example.com is a great site and so is https://google.com
+https://example.com is a great site and so is https://goOgle.com
 `,
 			expectedOutput: `
-[sample website](https://example.com) is a great site and so is [search engine](https://google.com)
+[sample website](https://example.com) is a great site and so is [search engine](https://goOgle.com)
 `,
 		},
 	}
