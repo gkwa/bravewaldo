@@ -1,7 +1,3 @@
-Here's an updated README.md with a casual description of the project and a cheatsheet-style overview of the different ways to run it with core parameters:
-
-```markdown
--- README.md --
 # bravewaldo
 
 Purpose: Bravewaldo is a fun and quirky command-line tool for processing and transforming Markdown files. It's like having a little digital helper that can spruce up your Markdown content with a few simple commands. Whether you want to wrap URLs, rewrite links, or do some other Markdown magic, Bravewaldo has got your back!
@@ -51,12 +47,3 @@ Here's a quick overview of the different commands and their functionality:
 - `bravewaldo core11`: Processes URLs in the input Markdown file, replacing them with friendly names if found in the URL map.
 
 Each command has its own set of flags and options, so feel free to explore and experiment with different combinations to unlock the full potential of Bravewaldo!
-
-Happy Markdown processing!
-```
-
-This updated README.md provides a casual and friendly introduction to the Bravewaldo project, explaining its purpose and giving an overview of the different commands available. The cheatsheet section briefly describes each command and its functionality, making it easy for users to quickly find the command they need.
-
-The example usage section showcases some common ways to run the tool, including enabling verbose mode, specifying the log format, and using a custom config file.
-
-Finally, the installation instructions provide the necessary commands to install Bravewaldo on macOS/Linux using Homebrew, with a placeholder for Windows instructions.
