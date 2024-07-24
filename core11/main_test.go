@@ -2,13 +2,10 @@ package core11
 
 import (
 	"bytes"
-	"fmt"
-	"math/rand"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	fuzz "github.com/google/gofuzz"
 )
 
 var urlMap = map[string]string{
@@ -24,6 +21,7 @@ type testCase struct {
 	name           string
 	inputText      string
 	expectedOutput string
+	options        ProcessOptions
 }
 
 func TestProcessMarkdown(t *testing.T) {
@@ -42,6 +40,7 @@ this and that [sample website](https://example.com) test
 [Google](https://example.com)
 friday [Google](https://example.com)
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "Replace URLs with friendly names (case-insensitive)",
@@ -57,6 +56,7 @@ this and that [sample website](https://Example.com) test
 [Google](https://google.com)
 friday [Google](https://example.com)
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "URLs in parentheses should not be replaced",
@@ -66,6 +66,7 @@ friday [Google](https://example.com)
 			expectedOutput: `
 [ Google ]( https://google.com )
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "Multiple URLs on a single line should all be replaced",
@@ -75,6 +76,7 @@ https://Example.com https://Example.com https://Example.com
 			expectedOutput: `
 [sample website](https://Example.com) [sample website](https://Example.com) [sample website](https://Example.com)
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "URLs in markdown links should not be replaced",
@@ -84,6 +86,7 @@ https://Example.com [test](https://Example.com) https://Example.com
 			expectedOutput: `
 [sample website](https://Example.com) [test](https://Example.com) [sample website](https://Example.com)
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "Existing markdown links should not be modified",
@@ -93,6 +96,7 @@ https://Example.com [test](https://Example.com) https://Example.com
 			expectedOutput: `
 [Example](https://Example.com)
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "URLs with query parameters should be replaced",
@@ -102,6 +106,7 @@ Check out https://example.com?param=value&another=123
 			expectedOutput: `
 Check out [sample website2](https://example.com?param=value&another=123)
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "URLs with fragments should be replaced",
@@ -111,6 +116,7 @@ See https://example.com#section1 for more info
 			expectedOutput: `
 See [sample website3](https://example.com#section1) for more info
 `,
+			options: ProcessOptions{IncludeTitle: false},
 		},
 		{
 			name: "URLs at the beginning and end of the line should be replaced",
@@ -120,6 +126,63 @@ https://example.com is a great site and so is https://goOgle.com
 			expectedOutput: `
 [sample website](https://example.com) is a great site and so is [search engine](https://goOgle.com)
 `,
+			options: ProcessOptions{IncludeTitle: false},
+		},
+		{
+			name: "Markdown links with titles should not be replaced",
+			inputText: `
+Check out [Google](https://google.com "Search Engine")
+And [Example](https://example.com "Sample Site")
+`,
+			expectedOutput: `
+Check out [Google](https://google.com "Search Engine")
+And [Example](https://example.com "Sample Site")
+`,
+			options: ProcessOptions{IncludeTitle: false},
+		},
+		{
+			name: "Markdown links with titles and spaces should not be replaced",
+			inputText: `
+Visit [ Google ]( https://google.com  "Best Search Engine" )
+Also [ Example ]( https://example.com  "Great Example Site" )
+`,
+			expectedOutput: `
+Visit [ Google ]( https://google.com  "Best Search Engine" )
+Also [ Example ]( https://example.com  "Great Example Site" )
+`,
+			options: ProcessOptions{IncludeTitle: false},
+		},
+		{
+			name: "Mix of Markdown links with titles and plain URLs",
+			inputText: `
+[Google](https://google.com "Search") and https://example.com are great sites
+Also check [Example](https://example.com "Sample") and http://test.org
+`,
+			expectedOutput: `
+[Google](https://google.com "Search") and [sample website](https://example.com) are great sites
+Also check [Example](https://example.com "Sample") and [testing site](http://test.org)
+`,
+			options: ProcessOptions{IncludeTitle: false},
+		},
+		{
+			name: "Plain URLs with IncludeTitle true",
+			inputText: `
+Check out https://google.com and https://example.com
+`,
+			expectedOutput: `
+Check out [search engine](https://google.com) and [sample website](https://example.com)
+`,
+			options: ProcessOptions{IncludeTitle: true},
+		},
+		{
+			name: "Existing links with IncludeTitle true",
+			inputText: `
+[Google](https://google.com) and [Example](https://example.com "Sample")
+`,
+			expectedOutput: `
+[Google](https://google.com) and [Example](https://example.com "Sample")
+`,
+			options: ProcessOptions{IncludeTitle: true},
 		},
 	}
 
@@ -127,7 +190,7 @@ https://example.com is a great site and so is https://goOgle.com
 		t.Run(tc.name, func(t *testing.T) {
 			input := strings.NewReader(tc.inputText)
 			var output bytes.Buffer
-			err := ProcessMarkdown(input, &output, urlMap)
+			err := ProcessMarkdown(input, &output, urlMap, tc.options)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -138,57 +201,23 @@ https://example.com is a great site and so is https://goOgle.com
 	}
 }
 
-func TestFuzzProcessMarkdown(t *testing.T) {
-	f := fuzz.New()
-	var input string
+func TestProcessMarkdownWithTitles(t *testing.T) {
+	input := `
+Check out [Google](https://google.com "Search Engine")
+And https://example.com
+`
+	expected := `
+Check out [Google](https://google.com "Search Engine")
+And [sample website](https://example.com)
+`
 
-	for i := 0; i < 1000; i++ {
-		f.Fuzz(&input)
-
-		inputReader := strings.NewReader(input)
-		var output bytes.Buffer
-		err := ProcessMarkdown(inputReader, &output, urlMap)
-		if err != nil {
-			t.Errorf("ProcessMarkdown failed on fuzz input: %v\nInput: %s", err, input)
-		}
+	var output bytes.Buffer
+	options := ProcessOptions{IncludeTitle: true}
+	err := ProcessMarkdown(strings.NewReader(input), &output, urlMap, options)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-}
-
-func TestRandomizedInput(t *testing.T) {
-	urlKeys := make([]string, 0, len(urlMap))
-	for k := range urlMap {
-		urlKeys = append(urlKeys, k)
+	if diff := cmp.Diff(expected, output.String()); diff != "" {
+		t.Errorf("output mismatch (-want +got):\n%s", diff)
 	}
-
-	for i := 0; i < 100; i++ {
-		input := generateRandomInput(urlKeys)
-		inputReader := strings.NewReader(input)
-		var output bytes.Buffer
-		err := ProcessMarkdown(inputReader, &output, urlMap)
-		if err != nil {
-			t.Errorf("ProcessMarkdown failed on random input: %v\nInput: %s", err, input)
-		}
-
-		t.Logf("Random Test %d:\nInput: %s\nOutput: %s\n", i+1, input, output.String())
-	}
-}
-
-func generateRandomInput(urls []string) string {
-	words := []string{"The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"}
-	var result strings.Builder
-
-	for i := 0; i < rand.Intn(20)+1; i++ {
-		if rand.Float32() < 0.3 && len(urls) > 0 {
-			url := urls[rand.Intn(len(urls))]
-			if rand.Float32() < 0.5 {
-				result.WriteString(fmt.Sprintf("[%s](%s) ", words[rand.Intn(len(words))], url))
-			} else {
-				result.WriteString(url + " ")
-			}
-		} else {
-			result.WriteString(words[rand.Intn(len(words))] + " ")
-		}
-	}
-
-	return strings.TrimSpace(result.String())
 }

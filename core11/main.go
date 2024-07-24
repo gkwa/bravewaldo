@@ -9,29 +9,76 @@ import (
 	"strings"
 )
 
-func ProcessMarkdown(input io.Reader, output io.Writer, urlMap map[string]string) error {
+type MarkdownLink struct {
+	Name  string
+	URL   string
+	Title string
+}
+
+type ProcessOptions struct {
+	IncludeTitle bool
+}
+
+func ProcessMarkdown(input io.Reader, output io.Writer, urlMap map[string]string, options ProcessOptions) error {
 	scanner := bufio.NewScanner(input)
+
+	re := regexp.MustCompile(`\[([^\]]+)\]\s*\(([^)]+)\)|\bhttps?://\S+`)
+
 	for scanner.Scan() {
 		line := scanner.Text()
-		re := regexp.MustCompile(`\[([^\]]+)\]\([^\)]+\)|\bhttps?://\S+`)
 		line = re.ReplaceAllStringFunc(line, func(match string) string {
-			if strings.HasPrefix(match, "[") {
+			link := parseMarkdownLink(match)
+			if link.Name != "" && link.URL != "" {
+				return match // Preserve existing Markdown links
+			}
+
+			surroundingText := line
+			index := strings.Index(surroundingText, match)
+			if index > 0 && strings.HasSuffix(strings.TrimSpace(surroundingText[:index]), "[") &&
+				index+len(match) < len(surroundingText) && strings.HasPrefix(strings.TrimSpace(surroundingText[index+len(match):]), ")") {
 				return match
 			}
-			url := match
-			lowercaseURL := strings.ToLower(url)
+
+			lowercaseURL := strings.ToLower(link.URL)
 			friendlyName, ok := urlMap[lowercaseURL]
 			if ok {
-				return fmt.Sprintf("[%s](%s)", friendlyName, url)
+				link.Name = friendlyName
+				return formatMarkdownLink(link, options.IncludeTitle)
 			}
-			return url
+			return link.URL
 		})
+
 		fmt.Fprintln(output, line)
 	}
+
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error reading input: %v", err)
 	}
+
 	return nil
+}
+
+func parseMarkdownLink(text string) MarkdownLink {
+	re := regexp.MustCompile(`^\[([^\]]+)\]\s*\(([^)\s]+)(?:\s+"([^"]+)")?\)$`)
+	matches := re.FindStringSubmatch(text)
+	if len(matches) >= 3 {
+		link := MarkdownLink{
+			Name: matches[1],
+			URL:  matches[2],
+		}
+		if len(matches) == 4 {
+			link.Title = matches[3]
+		}
+		return link
+	}
+	return MarkdownLink{URL: text}
+}
+
+func formatMarkdownLink(link MarkdownLink, includeTitle bool) string {
+	if includeTitle && link.Title != "" {
+		return fmt.Sprintf("[%s](%s \"%s\")", link.Name, link.URL, link.Title)
+	}
+	return fmt.Sprintf("[%s](%s)", link.Name, link.URL)
 }
 
 func Main() error {
@@ -51,5 +98,6 @@ func Main() error {
 		return fmt.Errorf("failed to create output file: %v", err)
 	}
 	defer outputFile.Close()
-	return ProcessMarkdown(inputFile, outputFile, urlMap)
+	options := ProcessOptions{IncludeTitle: false}
+	return ProcessMarkdown(inputFile, outputFile, urlMap, options)
 }
