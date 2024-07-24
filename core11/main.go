@@ -29,7 +29,7 @@ func ProcessMarkdown(input io.Reader, output io.Writer, urlMap map[string]string
 		line = re.ReplaceAllStringFunc(line, func(match string) string {
 			link := parseMarkdownLink(match)
 			if link.Name != "" && link.URL != "" {
-				return match // Preserve existing Markdown links
+				return formatMarkdownLink(link, options.IncludeTitle)
 			}
 
 			surroundingText := line
@@ -59,7 +59,7 @@ func ProcessMarkdown(input io.Reader, output io.Writer, urlMap map[string]string
 }
 
 func parseMarkdownLink(text string) MarkdownLink {
-	re := regexp.MustCompile(`^\[([^\]]+)\]\s*\(([^)\s]+)(?:\s+(?:"([^"]+)"|'([^']+)')?)?\)$`)
+	re := regexp.MustCompile(`^\s*\[([^\]]+)\]\s*\(([^)\s]+)(?:\s+(?:"([^"]+)"|'([^']+)')?)?\s*\)\s*$`)
 	matches := re.FindStringSubmatch(text)
 	if len(matches) >= 3 {
 		link := MarkdownLink{
@@ -80,7 +80,10 @@ func parseMarkdownLink(text string) MarkdownLink {
 
 func formatMarkdownLink(link MarkdownLink, includeTitle bool) string {
 	if includeTitle && link.Title != "" {
-		return fmt.Sprintf("[%s](%s \"%s\")", link.Name, link.URL, link.Title)
+		if strings.Contains(link.Title, "'") {
+			return fmt.Sprintf("[%s](%s \"%s\")", link.Name, link.URL, link.Title)
+		}
+		return fmt.Sprintf("[%s](%s '%s')", link.Name, link.URL, link.Title)
 	}
 	return fmt.Sprintf("[%s](%s)", link.Name, link.URL)
 }
