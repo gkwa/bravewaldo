@@ -1,6 +1,8 @@
 module github.com/gkwa/bravewaldo
 
-go 1.22.4
+go 1.23.2
+
+toolchain go1.23.4
 
 require (
 	github.com/fatih/color v1.18.0
@@ -14,7 +16,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
-	github.com/teekennedy/goldmark-markdown v0.4.0
+	github.com/teekennedy/goldmark-markdown v0.4.1
 	github.com/yuin/goldmark v1.7.8
 	github.com/yuin/goldmark-meta v1.1.0
 	go.uber.org/zap v1.27.0
