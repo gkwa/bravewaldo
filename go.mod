@@ -2,7 +2,7 @@ module github.com/gkwa/bravewaldo
 
 go 1.23.2
 
-toolchain go1.23.5
+toolchain go1.23.6
 
 require (
 	github.com/fatih/color v1.18.0
