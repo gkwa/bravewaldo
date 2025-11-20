@@ -19,7 +19,7 @@ require (
 	github.com/teekennedy/goldmark-markdown v0.5.1
 	github.com/yuin/goldmark v1.7.13
 	github.com/yuin/goldmark-meta v1.1.0
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	mvdan.cc/xurls/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.22.4
 )
