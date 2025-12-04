@@ -14,7 +14,7 @@ require (
 	github.com/google/go-containerregistry v0.20.7
 	github.com/magefile/mage v1.15.0
 	github.com/rs/zerolog v1.34.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/teekennedy/goldmark-markdown v0.5.1
 	github.com/yuin/goldmark v1.7.13
