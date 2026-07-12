@@ -18,7 +18,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/teekennedy/goldmark-markdown v0.5.1
 	github.com/yuin/goldmark v1.8.4
-	github.com/yuin/goldmark-meta v1.1.0
+	github.com/yuin/goldmark-meta/v2 v2.0.0
 	github.com/yuin/goldmark-meta/v2 v2.0.0
 	go.uber.org/zap v1.28.0
 	mvdan.cc/xurls/v2 v2.6.0
