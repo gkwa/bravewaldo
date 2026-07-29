@@ -6,7 +6,7 @@ toolchain go1.26.5
 
 require (
 	github.com/fatih/color v1.19.0
-	github.com/go-git/go-git/v5 v5.19.1
+	github.com/go-git/go-git/v5 v5.19.2
 	github.com/go-logr/logr v1.4.4
 	github.com/go-logr/zapr v1.3.0
 	github.com/go-logr/zerologr v1.2.3
@@ -18,7 +18,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/teekennedy/goldmark-markdown v0.5.1
 	github.com/yuin/goldmark v1.8.5
-	github.com/yuin/goldmark-meta/v2 v2.0.0
+	github.com/yuin/goldmark-meta v1.1.0
 	github.com/yuin/goldmark-meta/v2 v2.0.0
 	go.uber.org/zap v1.28.0
 	mvdan.cc/xurls/v2 v2.6.0
@@ -60,11 +60,11 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
