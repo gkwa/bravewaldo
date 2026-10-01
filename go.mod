@@ -23,7 +23,7 @@ require (
 	github.com/yuin/goldmark/v2 v2.1.6
 	go.uber.org/zap v1.28.0
 	mvdan.cc/xurls/v2 v2.6.0
-	sigs.k8s.io/controller-runtime v0.25.1
+	sigs.k8s.io/controller-runtime v0.25.2
 )
 
 require (
